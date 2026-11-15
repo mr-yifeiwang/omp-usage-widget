@@ -33,7 +33,7 @@ export function formatUsage(data, now = Date.now()) {
 // Render quota rows against the current editor width
 function showUsage(ctx, lines, limits = []) {
   ctx.ui.setWidget(
-    "usage-widget",
+    "omp-usage-widget",
     (_tui, theme) => ({
       render(width) {
         const padding = " ".repeat(
