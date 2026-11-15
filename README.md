@@ -18,9 +18,6 @@ The bars use the active theme's accent color below 70%, warning color from 70% t
 
 ## Installation
 
-From the extension directory, copy the entry point to OMP's user extensions directory:
-
 ```sh
-mkdir -p ~/.omp/agent/extensions/omp-usage-widget
-cp index.js ~/.omp/agent/extensions/omp-usage-widget/index.js
+omp plugin install git:github.com/mr-yifeiwang/omp-usage-widget
 ```
