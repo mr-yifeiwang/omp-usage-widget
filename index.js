@@ -14,22 +14,66 @@ export function formatUsage(data, now = Date.now()) {
         0,
         Math.ceil((limit.window.resetsAt - now) / 60_000),
       );
-      const days = Math.floor(minutes / 1440);
-      const hours = Math.floor((minutes % 1440) / 60);
-      const mins = minutes % 60;
-      reset = days
-        ? `${days}d ${hours}h`
-        : hours
-          ? `${hours}h ${mins}m`
-          : `${mins}m`;
+      reset =
+        minutes >= 1440
+          ? `${Math.floor(minutes / 1440)}d`
+          : minutes >= 60
+            ? `${Math.floor(minutes / 60)}h`
+            : `${minutes}m`;
     }
     const filled = Math.round(
-      Math.max(0, Math.min(1, limit.amount.usedFraction)) * 20,
+      Math.max(0, Math.min(1, limit.amount.usedFraction)) * 5,
     );
-    const bar = "█".repeat(filled) + "░".repeat(20 - filled);
+    const bar = "█".repeat(filled) + "░".repeat(5 - filled);
     return `${id}: ${bar} ${percent}% (${reset})`;
   });
-  return windows.join("\n");
+  return windows.join(" · ");
+}
+
+// Render quota rows against the current editor width
+function showUsage(ctx, lines, limits = []) {
+  ctx.ui.setWidget(
+    "usage-widget",
+    (_tui, theme) => ({
+      render(width) {
+        return lines.map((line) => {
+          const text = [...line].slice(0, width).join("");
+          const padding = " ".repeat(Math.max(0, width - [...text].length));
+          let styled = "";
+          let cursor = 0;
+          for (const match of text.matchAll(/█+|░+|\d+(?:\.\d+)?%/g)) {
+            styled += theme.fg("muted", text.slice(cursor, match.index));
+            styled += match[0].endsWith("%")
+              ? match[0]
+              : theme.fg(
+                  match[0][0] === "█"
+                    ? (() => {
+                        const windowId =
+                          text.slice(0, match.index).lastIndexOf("7d:") >= 0
+                            ? "7d"
+                            : "5h";
+                        const fraction = limits.find(
+                          (limit) => limit.scope?.windowId === windowId,
+                        )?.amount?.usedFraction;
+                        return fraction >= 0.9
+                          ? "error"
+                          : fraction >= 0.7
+                            ? "warning"
+                            : "accent";
+                      })()
+                    : "muted",
+                  match[0],
+                );
+            cursor = match.index + match[0].length;
+          }
+          styled += theme.fg("muted", text.slice(cursor));
+          return padding + styled;
+        });
+      },
+      invalidate() {},
+    }),
+    { placement: "aboveEditor" },
+  );
 }
 
 // Keep the main session's widget refreshed using OMP's cached usage reports
@@ -47,17 +91,18 @@ export default function usageWidget(pi) {
           { timeout: 20_000 },
         );
         if (result.code !== 0) throw new Error("Usage command failed");
-        ctx.ui.setWidget(
-          "usage-widget",
-          formatUsage(JSON.parse(result.stdout)).split("\n"),
-        );
+        const data = JSON.parse(result.stdout);
+        const report =
+          data.reports?.find((report) => report.provider === "openai-codex") ??
+          data.reports?.[0];
+        showUsage(ctx, [formatUsage(data)], report?.limits);
       } catch {
-        ctx.ui.setWidget("usage-widget", ["Usage  unavailable"]);
+        showUsage(ctx, ["Usage  unavailable"]);
       } finally {
         running = false;
       }
     };
-    ctx.ui.setWidget("usage-widget", ["Usage  loading…"]);
+    showUsage(ctx, ["Usage  loading…"]);
     ctx.setInterval(refresh, 5 * 60_000);
     await refresh();
   });
