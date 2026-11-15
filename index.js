@@ -23,9 +23,13 @@ export function formatUsage(data, now = Date.now()) {
           ? `${hours}h ${mins}m`
           : `${mins}m`;
     }
-    return `${id}: ${percent}% (${reset})`;
+    const filled = Math.round(
+      Math.max(0, Math.min(1, limit.amount.usedFraction)) * 20,
+    );
+    const bar = "█".repeat(filled) + "░".repeat(20 - filled);
+    return `${id}: ${bar} ${percent}% (${reset})`;
   });
-  return `Usage  ${windows.join("  ·  ")}`;
+  return windows.join("\n");
 }
 
 // Keep the main session's widget refreshed using OMP's cached usage reports
@@ -43,9 +47,10 @@ export default function usageWidget(pi) {
           { timeout: 20_000 },
         );
         if (result.code !== 0) throw new Error("Usage command failed");
-        ctx.ui.setWidget("usage-widget", [
-          formatUsage(JSON.parse(result.stdout)),
-        ]);
+        ctx.ui.setWidget(
+          "usage-widget",
+          formatUsage(JSON.parse(result.stdout)).split("\n"),
+        );
       } catch {
         ctx.ui.setWidget("usage-widget", ["Usage  unavailable"]);
       } finally {

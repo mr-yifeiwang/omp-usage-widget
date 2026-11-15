@@ -23,8 +23,8 @@ import { formatUsage } from "./index.js";
     ],
   };
   const output = formatUsage(data, now);
-  assert.ok(output.includes("5h: 12.5% (1h 30m)"));
-  assert.ok(output.includes("7d: 72% (2d 1h)"));
+  assert.ok(output.includes("5h: ███░░░░░░░░░░░░░░░░░ 12.5% (1h 30m)"));
+  assert.ok(output.includes("7d: ██████████████░░░░░░ 72% (2d 1h)"));
 }
 
 // Verify missing data is not presented as zero usage
