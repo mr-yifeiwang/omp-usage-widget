@@ -22,12 +22,12 @@ export function formatUsage(data, now = Date.now()) {
             : `${minutes}m`;
     }
     const filled = Math.round(
-      Math.max(0, Math.min(1, limit.amount.usedFraction)) * 5,
+      Math.max(0, Math.min(1, limit.amount.usedFraction)) * 8,
     );
-    const bar = "█".repeat(filled) + "░".repeat(5 - filled);
-    return `${id}: ${bar} ${percent}% (${reset})`;
+    const bar = "█".repeat(filled) + "░".repeat(8 - filled);
+    return `${id}: ${bar} ${percent}% (↻${reset})`;
   });
-  return windows.join(" · ");
+  return windows.join("\n");
 }
 
 // Render quota rows against the current editor width
@@ -36,9 +36,14 @@ function showUsage(ctx, lines, limits = []) {
     "usage-widget",
     (_tui, theme) => ({
       render(width) {
+        const padding = " ".repeat(
+          Math.max(
+            0,
+            width - Math.max(...lines.map((line) => [...line].length)),
+          ),
+        );
         return lines.map((line) => {
           const text = [...line].slice(0, width).join("");
-          const padding = " ".repeat(Math.max(0, width - [...text].length));
           let styled = "";
           let cursor = 0;
           for (const match of text.matchAll(/█+|░+|\d+(?:\.\d+)?%/g)) {
@@ -95,7 +100,7 @@ export default function usageWidget(pi) {
         const report =
           data.reports?.find((report) => report.provider === "openai-codex") ??
           data.reports?.[0];
-        showUsage(ctx, [formatUsage(data)], report?.limits);
+        showUsage(ctx, formatUsage(data).split("\n"), report?.limits);
       } catch {
         showUsage(ctx, ["Usage  unavailable"]);
       } finally {

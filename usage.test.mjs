@@ -23,7 +23,7 @@ import usageWidget, { formatUsage } from "./index.js";
     ],
   };
   const output = formatUsage(data, now);
-  assert.equal(output, "5h: █░░░░ 12.5% (1h) · 7d: ████░ 72% (2d)");
+  assert.equal(output, "5h: █░░░░░░░ 12.5% (↻1h)\n7d: ██████░░ 72% (↻2d)");
 }
 
 // Verify countdown units at their boundaries
@@ -49,7 +49,7 @@ import usageWidget, { formatUsage } from "./index.js";
         },
       ],
     };
-    assert.ok(formatUsage(data, now).includes(`(${expected})`));
+    assert.ok(formatUsage(data, now).includes(`(↻${expected})`));
   }
 }
 
@@ -109,22 +109,22 @@ import usageWidget, { formatUsage } from "./index.js";
     { fg: (_color, text) => text, bold: (text) => text },
   );
   for (const width of [60, 80]) {
-    for (const line of component.render(width)) {
-      assert.equal([...line].length, width);
-      assert.ok(line.startsWith(" "));
-      assert.ok(!line.endsWith(" "));
-    }
+    const rows = component.render(width);
+    assert.equal(rows.length, 2);
+    assert.equal(rows[0].indexOf("█"), rows[1].indexOf("█"));
+    assert.ok(rows.every((line) => line.length <= width));
+    assert.equal(Math.max(...rows.map((line) => line.length)), width);
   }
   const styled = widget(
     {},
     { fg: (color, text) => `<${color}>${text}</${color}>` },
-  ).render(80)[0];
-  assert.ok(styled.includes("<muted>5h: </muted>"));
-  assert.ok(styled.includes("<muted> (0m) · 7d: </muted>"));
-  assert.ok(styled.includes("25%"));
-  assert.ok(!styled.includes("<muted>25%</muted>"));
-  assert.ok(styled.includes("<accent>█"));
-  assert.ok(styled.includes("<warning>████"));
+  ).render(80);
+  assert.ok(styled[0].includes("<muted>5h: </muted>"));
+  assert.ok(styled[1].includes("<muted>7d: </muted>"));
+  assert.ok(styled[0].includes("25%"));
+  assert.ok(!styled[0].includes("<muted>25%</muted>"));
+  assert.ok(styled[0].includes("<accent>█"));
+  assert.ok(styled[1].includes("<warning>████"));
 }
 // Verify colors use unrounded usage at both threshold boundaries
 {
