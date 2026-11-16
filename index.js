@@ -3,11 +3,20 @@ export function formatUsage(data, now = Date.now()) {
   const report =
     data.reports?.find((report) => report.provider === "openai-codex") ??
     data.reports?.[0];
-  const windows = ["5h", "7d"].map((id) => {
-    const limit = report?.limits?.find((limit) => limit.scope?.windowId === id);
-    if (!Number.isFinite(limit?.amount?.usedFraction))
-      return `${id}: unavailable`;
-    const percent = Math.round(limit.amount.usedFraction * 1000) / 10;
+  const limits = ["5h", "7d"].map((id) =>
+    report?.limits?.find((limit) => limit.scope?.windowId === id),
+  );
+  const percents = limits.map((limit) =>
+    Number.isFinite(limit?.amount?.usedFraction)
+      ? `${Math.round(limit.amount.usedFraction * 1000) / 10}%`
+      : null,
+  );
+  const percentWidth = Math.max(
+    0,
+    ...percents.map((percent) => percent?.length ?? 0),
+  );
+  const resets = limits.map((limit, index) => {
+    if (percents[index] === null) return null;
     let reset = "reset unknown";
     if (Number.isFinite(limit.window?.resetsAt)) {
       const minutes = Math.max(
@@ -21,11 +30,18 @@ export function formatUsage(data, now = Date.now()) {
             ? `${Math.floor(minutes / 60)}h`
             : `${minutes}m`;
     }
+    return reset;
+  });
+  const resetWidth = Math.max(0, ...resets.map((reset) => reset?.length ?? 0));
+  const windows = ["5h", "7d"].map((id, index) => {
+    const limit = limits[index];
+    const percent = percents[index];
+    if (percent === null) return `${id}: unavailable`;
     const filled = Math.round(
       Math.max(0, Math.min(1, limit.amount.usedFraction)) * 8,
     );
     const bar = "█".repeat(filled) + "░".repeat(8 - filled);
-    return `${id}: ${bar} ${percent}% (↻${reset})`;
+    return `${id}: ${bar} ${percent.padStart(percentWidth)} (↻${resets[index].padStart(resetWidth)})`;
   });
   return windows.join("\n");
 }

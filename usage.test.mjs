@@ -23,7 +23,64 @@ import usageWidget, { formatUsage } from "./index.js";
     ],
   };
   const output = formatUsage(data, now);
-  assert.equal(output, "5h: █░░░░░░░ 12.5% (↻1h)\n7d: ██████░░ 72% (↻2d)");
+  assert.equal(output, "5h: █░░░░░░░ 12.5% (↻1h)\n7d: ██████░░   72% (↻2d)");
+}
+
+// Verify percentages and reset countdowns stay in columns across number widths
+{
+  for (const [first, second] of [
+    [0, 0.97],
+    [0.125, 1],
+    [1, 0.009],
+  ]) {
+    const data = {
+      reports: [
+        {
+          limits: [
+            {
+              scope: { windowId: "5h" },
+              amount: { usedFraction: first },
+              window: { resetsAt: 60_000 },
+            },
+            {
+              scope: { windowId: "7d" },
+              amount: { usedFraction: second },
+              window: { resetsAt: 120_000 },
+            },
+          ],
+        },
+      ],
+    };
+    const [firstRow, secondRow] = formatUsage(data, 0).split("\n");
+    assert.equal(firstRow.indexOf("%"), secondRow.indexOf("%"));
+    assert.equal(firstRow.indexOf("("), secondRow.indexOf("("));
+  }
+}
+
+// Verify countdown values and closing parentheses align across different widths
+{
+  const data = {
+    reports: [
+      {
+        limits: [
+          {
+            scope: { windowId: "5h" },
+            amount: { usedFraction: 0 },
+            window: { resetsAt: 4 * 3_600_000 },
+          },
+          {
+            scope: { windowId: "7d" },
+            amount: { usedFraction: 0.97 },
+            window: { resetsAt: 11 * 3_600_000 },
+          },
+        ],
+      },
+    ],
+  };
+  assert.equal(
+    formatUsage(data, 0),
+    "5h: ░░░░░░░░  0% (↻ 4h)\n7d: ████████ 97% (↻11h)",
+  );
 }
 
 // Verify countdown units at their boundaries
