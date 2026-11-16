@@ -52,6 +52,7 @@ function showUsage(ctx, lines, limits = []) {
     "omp-usage-widget",
     (_tui, theme) => ({
       render(width) {
+        if (ctx.models.current()?.provider !== "openai-codex") return [];
         const padding = " ".repeat(
           Math.max(
             0,

@@ -114,6 +114,39 @@ import usageWidget, { formatUsage } from "./index.js";
 {
   assert.ok(formatUsage({ reports: [] }, 0).includes("unavailable"));
 }
+// Verify widget visibility follows the current model provider
+{
+  let start, widget;
+  let provider = "anthropic";
+  usageWidget({
+    on(event, handler) {
+      if (event === "session_start") start = handler;
+    },
+    async exec() {
+      return { code: 0, stdout: JSON.stringify({ reports: [] }) };
+    },
+  });
+  await start(
+    {},
+    {
+      mode: "tui",
+      agent: { kind: "main" },
+      models: { current: () => ({ provider }) },
+      setInterval() {},
+      ui: {
+        setWidget(_key, value) {
+          widget = value;
+        },
+      },
+    },
+  );
+  const component = widget({}, { fg: (_color, text) => text });
+  assert.deepEqual(component.render(80), []);
+  provider = "openai-codex";
+  assert.ok(component.render(80).some((line) => line.includes("5h:")));
+  provider = "openai";
+  assert.deepEqual(component.render(80), []);
+}
 // Verify the widget remains right-aligned as the terminal is resized
 {
   let start;
@@ -152,6 +185,7 @@ import usageWidget, { formatUsage } from "./index.js";
     {
       mode: "tui",
       agent: { kind: "main" },
+      models: { current: () => ({ provider: "openai-codex" }) },
       setInterval() {},
       ui: {
         setWidget(_key, value) {
@@ -220,6 +254,7 @@ import usageWidget, { formatUsage } from "./index.js";
       {
         mode: "tui",
         agent: { kind: "main" },
+        models: { current: () => ({ provider: "openai-codex" }) },
         setInterval() {},
         ui: {
           setWidget(_key, value) {

@@ -2,6 +2,10 @@
 
 An OMP extension that displays OpenAI Codex usage above the editor. It shows the usage percentage and reset countdown for the five-hour and seven-day windows. The widget requests usage from OMP at startup and every five minutes.
 
+The plugin currently supports the following providers:
+
+- `openai-codex`
+
 ## Example
 
 ```txt
