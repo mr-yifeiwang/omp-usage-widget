@@ -23,7 +23,10 @@ import usageWidget, { formatUsage } from "./index.js";
     ],
   };
   const output = formatUsage(data, now);
-  assert.equal(output, "5h: █░░░░░░░ 12.5% (↻1h)\n7d: ██████░░   72% (↻2d)");
+  assert.equal(
+    output,
+    "5h █░░░░░░░░░ 12.5% ↻ 1h30m\n7d ███████░░░   72% ↻ 2d 1h",
+  );
 }
 
 // Verify percentages and reset countdowns stay in columns across number widths
@@ -53,11 +56,11 @@ import usageWidget, { formatUsage } from "./index.js";
     };
     const [firstRow, secondRow] = formatUsage(data, 0).split("\n");
     assert.equal(firstRow.indexOf("%"), secondRow.indexOf("%"));
-    assert.equal(firstRow.indexOf("("), secondRow.indexOf("("));
+    assert.equal(firstRow.indexOf("↻"), secondRow.indexOf("↻"));
   }
 }
 
-// Verify countdown values and closing parentheses align across different widths
+// Verify countdown values align across different widths
 {
   const data = {
     reports: [
@@ -79,7 +82,33 @@ import usageWidget, { formatUsage } from "./index.js";
   };
   assert.equal(
     formatUsage(data, 0),
-    "5h: ░░░░░░░░  0% (↻ 4h)\n7d: ████████ 97% (↻11h)",
+    "5h ░░░░░░░░░░  0% ↻  4h0m\n7d ██████████ 97% ↻ 11h0m",
+  );
+}
+
+// Verify both countdown components align when their widths differ
+{
+  const data = {
+    reports: [
+      {
+        limits: [
+          {
+            scope: { windowId: "5h" },
+            amount: { usedFraction: 0 },
+            window: { resetsAt: 209 * 60_000 },
+          },
+          {
+            scope: { windowId: "7d" },
+            amount: { usedFraction: 0 },
+            window: { resetsAt: 3060 * 60_000 },
+          },
+        ],
+      },
+    ],
+  };
+  assert.equal(
+    formatUsage(data, 0),
+    "5h ░░░░░░░░░░ 0% ↻ 3h29m\n7d ░░░░░░░░░░ 0% ↻ 2d 3h",
   );
 }
 
@@ -89,9 +118,11 @@ import usageWidget, { formatUsage } from "./index.js";
   for (const [minutes, expected] of [
     [1, "1m"],
     [59, "59m"],
-    [60, "1h"],
-    [1439, "23h"],
-    [1440, "1d"],
+    [60, "1h0m"],
+    [209, "3h29m"],
+    [1439, "23h59m"],
+    [1440, "1d0h"],
+    [3114, "2d3h"],
   ]) {
     const data = {
       reports: [
@@ -106,7 +137,7 @@ import usageWidget, { formatUsage } from "./index.js";
         },
       ],
     };
-    assert.ok(formatUsage(data, now).includes(`(↻${expected})`));
+    assert.ok(formatUsage(data, now).includes(`↻ ${expected}`));
   }
 }
 
@@ -143,7 +174,9 @@ import usageWidget, { formatUsage } from "./index.js";
   const component = widget({}, { fg: (_color, text) => text });
   assert.deepEqual(component.render(80), []);
   provider = "openai-codex";
-  assert.ok(component.render(80).some((line) => line.includes("5h:")));
+  assert.ok(
+    component.render(80).some((line) => line.includes("5h unavailable")),
+  );
   provider = "openai";
   assert.deepEqual(component.render(80), []);
 }
@@ -210,8 +243,8 @@ import usageWidget, { formatUsage } from "./index.js";
     {},
     { fg: (color, text) => `<${color}>${text}</${color}>` },
   ).render(80);
-  assert.ok(styled[0].includes("<muted>5h: </muted>"));
-  assert.ok(styled[1].includes("<muted>7d: </muted>"));
+  assert.ok(styled[0].includes("<muted>5h </muted>"));
+  assert.ok(styled[1].includes("<muted>7d </muted>"));
   assert.ok(styled[0].includes("25%"));
   assert.ok(!styled[0].includes("<muted>25%</muted>"));
   assert.ok(styled[0].includes("<accent>█"));

@@ -25,23 +25,36 @@ export function formatUsage(data, now = Date.now()) {
       );
       reset =
         minutes >= 1440
-          ? `${Math.floor(minutes / 1440)}d`
+          ? `${Math.floor(minutes / 1440)}d${Math.floor((minutes % 1440) / 60)}h`
           : minutes >= 60
-            ? `${Math.floor(minutes / 60)}h`
+            ? `${Math.floor(minutes / 60)}h${minutes % 60}m`
             : `${minutes}m`;
     }
     return reset;
   });
+  const parts = resets.map((reset) => reset?.match(/^(\d+[dh])(\d+[hm])$/));
+  const firstWidth = Math.max(0, ...parts.map((part) => part?.[1].length ?? 0));
+  const secondWidth = Math.max(
+    0,
+    ...parts.map((part) => part?.[2].length ?? 0),
+  );
+  for (let index = 0; index < resets.length; index++) {
+    if (parts[index]) {
+      resets[index] =
+        parts[index][1].padStart(firstWidth) +
+        parts[index][2].padStart(secondWidth);
+    }
+  }
   const resetWidth = Math.max(0, ...resets.map((reset) => reset?.length ?? 0));
   const windows = ["5h", "7d"].map((id, index) => {
     const limit = limits[index];
     const percent = percents[index];
-    if (percent === null) return `${id}: unavailable`;
+    if (percent === null) return `${id} unavailable`;
     const filled = Math.round(
-      Math.max(0, Math.min(1, limit.amount.usedFraction)) * 8,
+      Math.max(0, Math.min(1, limit.amount.usedFraction)) * 10,
     );
-    const bar = "█".repeat(filled) + "░".repeat(8 - filled);
-    return `${id}: ${bar} ${percent.padStart(percentWidth)} (↻${resets[index].padStart(resetWidth)})`;
+    const bar = "█".repeat(filled) + "░".repeat(10 - filled);
+    return `${id} ${bar} ${percent.padStart(percentWidth)} ↻ ${resets[index].padStart(resetWidth)}`;
   });
   return windows.join("\n");
 }
@@ -71,7 +84,7 @@ function showUsage(ctx, lines, limits = []) {
                   match[0][0] === "█"
                     ? (() => {
                         const windowId =
-                          text.slice(0, match.index).lastIndexOf("7d:") >= 0
+                          text.slice(0, match.index).lastIndexOf("7d ") >= 0
                             ? "7d"
                             : "5h";
                         const fraction = limits.find(
