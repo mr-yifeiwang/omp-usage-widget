@@ -82,7 +82,7 @@ import usageWidget, { formatUsage } from "./index.js";
   };
   assert.equal(
     formatUsage(data, 0),
-    "5h ░░░░░░░░░░  0% ↻  4h0m\n7d ██████████ 97% ↻ 11h0m",
+    "5h ░░░░░░░░░░  0% ↻  4h0m\n7d █████████░ 97% ↻ 11h0m",
   );
 }
 

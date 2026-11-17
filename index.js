@@ -50,7 +50,7 @@ export function formatUsage(data, now = Date.now()) {
     const limit = limits[index];
     const percent = percents[index];
     if (percent === null) return `${id} unavailable`;
-    const filled = Math.round(
+    const filled = Math.floor(
       Math.max(0, Math.min(1, limit.amount.usedFraction)) * 10,
     );
     const bar = "█".repeat(filled) + "░".repeat(10 - filled);

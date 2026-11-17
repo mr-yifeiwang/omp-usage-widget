@@ -9,11 +9,11 @@ The plugin currently supports the following providers:
 ## Example
 
 ```txt
-5h ███░░░░░░░ 25% ↻ 3h29m
-7d ████████░░ 75% ↻ 2d 3h
+5h ██░░░░░░░░ 25% ↻ 3h29m
+7d ███████░░░ 75% ↻ 2d 3h
 ```
 
-The bars use the active theme's accent color below 60%, warning color from 60% to below 90%, and error color at 90% and above. Each bar is rounded to the nearest of ten blocks.
+The bars use the active theme's accent color below 60%, warning color from 60% to below 90%, and error color at 90% and above. Each filled block represents a complete 10% of usage.
 
 ## Requirements
 
