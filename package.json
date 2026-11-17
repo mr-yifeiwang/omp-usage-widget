@@ -1,6 +1,6 @@
 {
   "name": "omp-usage-widget",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Usage display for Oh My Pi (OMP)",
   "license": "MIT",
   "omp": {
