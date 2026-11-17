@@ -92,7 +92,7 @@ function showUsage(ctx, lines, limits = []) {
                         )?.amount?.usedFraction;
                         return fraction >= 0.9
                           ? "error"
-                          : fraction >= 0.7
+                          : fraction >= 0.6
                             ? "warning"
                             : "accent";
                       })()

@@ -253,8 +253,8 @@ import usageWidget, { formatUsage } from "./index.js";
 // Verify colors use unrounded usage at both threshold boundaries
 {
   for (const [fraction, color] of [
-    [0.6999, "accent"],
-    [0.7, "warning"],
+    [0.5999, "accent"],
+    [0.6, "warning"],
     [0.8999, "warning"],
     [0.9, "error"],
   ]) {
